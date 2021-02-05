@@ -1,0 +1,7 @@
+dir: "/mnt/AchTeraD/data/BICRO250/MS76/gatk-cnv/"
+tumor_dir: "/mnt/AchTeraD/data/BICRO250/MS76/bamfiles/"
+normal_dir: "/mnt/AchTeraD/data/BICRO250/MS76/bamfiles/blood/"
+binsize: "1e5"
+ref: "/mnt/AchTeraD/Documents/references/hg19/hg19.fa"
+dictionary: "/mnt/AchTeraD/Documents/references/hg19/hg19.dict"
+threads: 32
