@@ -12,6 +12,10 @@ tma_etils = fread("/mnt/AchTeraD/Documents/Projects/phaseII-clinicaltrial/data/e
 vis_tils = fread("/mnt/AchTeraD/Documents/Projects/phaseII-clinicaltrial/data/multiplexed-IHC/TILs.tsv")
 ihc = fread("/mnt/AchTeraD/Documents/Projects/phaseII-clinicaltrial/data/multiplexed-IHC/total_ratios.tsv")
 
+# Load annotation
+annot = fread("/mnt/AchTeraD/Documents/Projects/phaseII-clinicaltrial/data/ER-status.tsv")
+annot[, er_status := ifelse(er_status == 0, "ER Negative", "ER Positive")]
+
 # Set new names to merge
 setnames(wsi_etils, c("pid", "wsi_etils", "wsi_ettils", "wsi_estils", "wsi_eastils"))
 setnames(tma_etils, c("pid", "tma_etils", "tma_ettils", "tma_estils", "tma_eastils"))
@@ -52,6 +56,21 @@ plt2 = ggplot(wsi_subset_m[variable == "wsi_eastils"], aes(x = lbpc, y = value, 
 save_and_plot(plt2, "/mnt/AchTeraD/Documents/Projects/phaseII-clinicaltrial/Plots/tils/wsi_eastils-vis_tils-boxplot",
               width = 7, height = 7)
 
+# Distinguish ER subgroups
+wsi_subset_m_er = merge(wsi_subset_m, annot)
+plt2_er = ggplot(wsi_subset_m_er[variable == "wsi_eastils"], aes(x = lbpc, y = value, color = lbpc)) +
+  geom_boxplot(outlier.shape = NA) +
+  geom_jitter(width = .2) +
+  facet_wrap(~er_status) +
+  stat_compare_means(paired = F, comparisons = list(c("non-LBPC", "LBPC"))) +
+  scale_color_brewer(palette = "Set1", direction = -1) +
+  labs(y = "WSI_easTILs (%)") +
+  theme(axis.title.x = element_blank(),
+        legend.position = "none")
+
+save_and_plot(plt2_er, "/mnt/AchTeraD/Documents/Projects/phaseII-clinicaltrial/Plots/tils/wsi_eastils-vis_tils-boxplot-ER",
+              width = 9, height = 7)
+
 # Plot tma versus visual tils
 tma_subset = total[, .(pid, til, tma_etils, tma_eastils)]
 tma_subset = tma_subset[complete.cases(tma_subset)]
@@ -82,6 +101,21 @@ plt4 = ggplot(tma_subset_m[variable == "tma_eastils"], aes(x = lbpc, y = value, 
         legend.position = "none")
 
 save_and_plot(plt4, "/mnt/AchTeraD/Documents/Projects/phaseII-clinicaltrial/Plots/tils/tma_eastils-vis_tils-boxplot",
+              width = 7, height = 7)
+
+# Distinguish ER
+tma_subset_m_er = merge(tma_subset_m, annot)
+plt4_er = ggplot(tma_subset_m_er[variable == "tma_eastils"], aes(x = lbpc, y = value, color = lbpc)) +
+  geom_boxplot(outlier.shape = NA) +
+  geom_jitter(width = .2) +
+  facet_wrap(~er_status) +
+  stat_compare_means(paired = F, comparisons = list(c("non-LBPC", "LBPC"))) +
+  scale_color_brewer(palette = "Set1", direction = -1) +
+  labs(y = "TMA_easTILs (%)") +
+  theme(axis.title.x = element_blank(),
+        legend.position = "none")
+
+save_and_plot(plt4_er, "/mnt/AchTeraD/Documents/Projects/phaseII-clinicaltrial/Plots/tils/tma_eastils-vis_tils-boxplot-ER",
               width = 7, height = 7)
 
 # Plot IHC density versus visual tils

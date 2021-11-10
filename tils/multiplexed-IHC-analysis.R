@@ -15,6 +15,9 @@ pd1 = fread("/mnt/AchTeraD/Documents/Projects/phaseII-clinicaltrial/data/multipl
 pdl1 = fread("/mnt/AchTeraD/Documents/Projects/phaseII-clinicaltrial/data/multiplexed-IHC/pdl1_ratios.tsv")
 pdl1_ck = fread("/mnt/AchTeraD/Documents/Projects/phaseII-clinicaltrial/data/multiplexed-IHC/pdl1_ck.tsv")
 
+# Add annotation
+annot = fread("/mnt/AchTeraD/Documents/Projects/phaseII-clinicaltrial/data/ER-status.tsv")
+annot[, er_status := ifelse(er_status == 0, "ER Negative", "ER Positive")]
 # # Add missing samples in pdl1_ck
 # pdl1_ck = rbind(pdl1_ck, data.table(pid = c(203, 638, 705), dens = NA), use.names = F)
 # setorder(pdl1_ck, PATIENT.ID)
@@ -33,6 +36,10 @@ total_m[, location := factor(location, levels = c("stroma", "tumor"))]
 # Prepare values for log transformation
 total_m[, value_log := value + 1]
 
+# Merge with annot
+total_m = merge(total_m, annot, by.x = "patient_id", by.y = "pid")
+
+
 plt_all_box = ggplot(total_m, aes(x = variable, y = value_log, fill = location)) +
   geom_boxplot() +
   scale_y_log10() +
@@ -48,6 +55,7 @@ save_and_plot(plt_all_box, "/mnt/AchTeraD/Documents/Projects/phaseII-clinicaltri
 
 plt_all_heat = ggplot(total_mean, aes(x = variable, y = location, fill = V1)) +
   geom_tile() +
+  geom_text(aes(label = round(V1, 1))) +
   coord_flip() +
   labs(y = "",
        x = "", 
@@ -57,6 +65,22 @@ plt_all_heat = ggplot(total_mean, aes(x = variable, y = location, fill = V1)) +
 save_and_plot(plt_all_heat, "/mnt/AchTeraD/Documents/Projects/phaseII-clinicaltrial/Plots/ihc-plots/density_singles-heatmap",
               height = 7, width = 7)
 
+# Heatmap by subgroup
+total_mean_er = total_m[!is.na(value), mean(value), by = .(location, variable, er_status)]
+
+plt_all_heat_er = ggplot(total_mean_er, aes(x = variable, y = location, fill = V1)) +
+  geom_tile() +
+  facet_wrap(~er_status) +
+  geom_text(aes(label = round(V1, 1))) +
+  coord_flip() +
+  labs(y = "",
+       x = "", 
+       fill = "Mean cell density") +
+  scale_fill_gradient2(high = "red")
+
+save_and_plot(plt_all_heat_er, "/mnt/AchTeraD/Documents/Projects/phaseII-clinicaltrial/Plots/ihc-plots/density_singles-heatmap-ER",
+              height = 7, width = 9)
+
 # Combine all co-expression
 coexp = Reduce(merge, list(foxp3, pd1, pdl1))
 coexp = coexp[, grepl("PD|patient|location", colnames(coexp)), with = F]
@@ -64,6 +88,10 @@ coexp_m = melt.data.table(coexp, id.vars = c("patient_id", "location"))
 
 # Prepare values for log transformation
 coexp_m[, value_log := value + 1]
+
+# Merge with annot
+coexp_m = merge(coexp_m, annot, by.x = "patient_id", by.y = "pid")
+
 
 plt_coexp_box = ggplot(coexp_m, aes(x = variable, y = value_log, fill = location)) +
   geom_boxplot() +
@@ -82,6 +110,7 @@ coexp_mean = coexp_m[!is.na(value), mean(value), by = .(location, variable)]
 
 plt_coexp_heat = ggplot(coexp_mean, aes(x = variable, y = location, fill = V1)) +
   geom_tile() +
+  geom_text(aes(label = round(V1, 1))) +
   coord_flip() +
   labs(y = "",
        x = "", 
@@ -90,6 +119,23 @@ plt_coexp_heat = ggplot(coexp_mean, aes(x = variable, y = location, fill = V1)) 
 
 save_and_plot(plt_coexp_heat, "/mnt/AchTeraD/Documents/Projects/phaseII-clinicaltrial/Plots/ihc-plots/density_coexp-heatmap",
               height = 7, width = 7)
+
+# Heatmap by subgroup
+coexp_mean_er = coexp_m[!is.na(value), mean(value), by = .(location, variable, er_status)]
+
+plt_coexp_heat_er = ggplot(coexp_mean_er, aes(x = variable, y = location, fill = V1)) +
+  geom_tile() +
+  facet_wrap(~er_status) +
+  geom_text(aes(label = round(V1, 1))) +
+  coord_flip() +
+  labs(y = "",
+       x = "", 
+       fill = "Mean cell density") +
+  scale_fill_gradient2(high = "red")
+
+save_and_plot(plt_coexp_heat_er, "/mnt/AchTeraD/Documents/Projects/phaseII-clinicaltrial/Plots/ihc-plots/density_coexp-heatmap-ER",
+              height = 7, width = 9)
+
 # Plot sTILs
 stils = merge(tils, total[location == "stroma", total[location == "stroma", list(total_immune = sum(CD4, CD8)), by = patient_id]])
 stils_scatter = ggplot(stils, aes(x = TIL_percentage, y = total_immune)) +

@@ -9,7 +9,7 @@ source("/mnt/AchTeraD/Documents/R-functions/save_and_plot.R")
 
 
 # Read data
-genes = fread("/mnt/AchTeraD/Documents/Projects/phaseII-clinicaltrial/data/cna-information/BICRO205+206_MS18+NZ24_100kb_Gene-overlaps_genelist.tsv")
+genes = fread("/mnt/AchTeraD/Documents/Projects/phaseII-clinicaltrial/data/cna-information/BICRO205+206_MS18+NZ24_100kb_Gene-overlaps.tsv")
 
 #parameters
 sample = "BICRO205+206_MS18+NZ24"
@@ -21,6 +21,7 @@ cl = 20
 # List all samples
 samples = names(readRDS("/mnt/AchTeraD/Documents/Projects/phaseII-clinicaltrial/data/rds-files/BICRO205+206_MS18+NZ24_1e5_gatk-cnv.rds"))
 samples = paste0("PID ", samples)
+annot = fread("/mnt/AchTeraD/Documents/Projects/phaseII-clinicaltrial/data/ER-status.tsv")
 
 #get gene amplifications/deletions
 plotting = genes[, c(6, 5, 4)]
@@ -75,4 +76,34 @@ plt = oncoPrint(plotting_mat,
 # Save
 save_and_plot(plt, paste0("/mnt/AchTeraD/Documents/Projects/phaseII-clinicaltrial/Plots/oncoprint/", 
                                      sample, "_", binsize, "_", "_oncoprint"), 
+              height = 10, width = 12)
+
+# Seperate for ER- and ER+
+annot[, pid := paste0("PID ", pid)]
+plt2 = oncoPrint(plotting_mat[, colnames(plotting_mat) %in% annot[er_status == 0, pid]],
+                alter_fun = list(
+                  background = alter_graphic("rect", width = 0.9, height = 0.9, fill = "#FFFFFF", col = "black"),
+                  AMP = alter_graphic("rect", width = 0.85, height = 0.85, fill = cols["AMP"]),
+                  DEL = alter_graphic("rect", width = 0.85, height = 0.85, fill = cols["DEL"])),
+                col = cols,
+                border = "black",
+                show_column_names = T)
+
+# Save
+save_and_plot(plt2, paste0("/mnt/AchTeraD/Documents/Projects/phaseII-clinicaltrial/Plots/oncoprint/", 
+                          sample, "_", binsize, "_", "_oncoprint-erNeg"),
+              height = 10, width = 12)
+
+plt3 = oncoPrint(plotting_mat[, colnames(plotting_mat) %in% annot[er_status == 1, pid]],
+                alter_fun = list(
+                  background = alter_graphic("rect", width = 0.9, height = 0.9, fill = "#FFFFFF", col = "black"),
+                  AMP = alter_graphic("rect", width = 0.85, height = 0.85, fill = cols["AMP"]),
+                  DEL = alter_graphic("rect", width = 0.85, height = 0.85, fill = cols["DEL"])),
+                col = cols,
+                border = "black",
+                show_column_names = T)
+
+# Save
+save_and_plot(plt3, paste0("/mnt/AchTeraD/Documents/Projects/phaseII-clinicaltrial/Plots/oncoprint/", 
+                          sample, "_", binsize, "_", "_oncoprint-erPos"),
               height = 10, width = 12)

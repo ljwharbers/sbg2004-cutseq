@@ -12,6 +12,7 @@ sample = "BICRO205+206_MS18+NZ24"
 binsize = "100kb"
 
 ## Load data
+annot = fread("/mnt/AchTeraD/Documents/Projects/phaseII-clinicaltrial/data/ER-status.tsv")
 cna = fread("/mnt/AchTeraD/Documents/Projects/phaseII-clinicaltrial/data/cna-information/BICRO205+206_MS18+NZ24_100kb_CNAinformation.tsv")
 cna[, length_mb := (END - START) / 1e6]
 
@@ -57,3 +58,20 @@ plt = ggplot(freq_melt, aes(x = stratification, y = value, color = cna)) +
 
 save_and_plot(plt, paste0("/mnt/AchTeraD/Documents/Projects/phaseII-clinicaltrial/Plots/cna-length/", sample, "_", binsize, 
                           "_cna-length_stratification"), height = 7, width = 7)
+
+# Seperate for ER- and ER+
+annot[, er_status := ifelse(er_status == 0, "ER Negative", "ER Positive")]
+freq_melt = merge(freq_melt, annot, by.x = "sample", by.y = "pid")
+
+plt2 = ggplot(freq_melt, aes(x = stratification, y = value, color = cna)) +
+  geom_boxplot(outlier.shape = NA) +
+  facet_wrap(~er_status) +
+  geom_point(position = position_jitterdodge(jitter.width = 0.15)) +
+  scale_color_brewer(palette = "Set1") +
+  scale_x_discrete(labels = c("< 1Mb", "1-10Mb", "> 10Mb")) +
+  labs(y = "Proportion of alteration type in sample (%)",
+       x = "",
+       color = "")
+
+save_and_plot(plt2, paste0("/mnt/AchTeraD/Documents/Projects/phaseII-clinicaltrial/Plots/cna-length/", sample, "_", binsize, 
+                          "_cna-length_stratification-erstatus"), height = 7, width = 9)
