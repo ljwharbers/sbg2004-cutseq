@@ -85,7 +85,6 @@ rule CreatePON:
 		"gatk CreateReadCountPanelOfNormals {params.poncounts} -O {output} "
 		"--minimum-interval-median-percentile 5.0 "
 		" --conf 'spark.executor.cores={threads}'"
-		# Find a fix to include GC correction..
 
 # Collecting tumor read counts
 rule collectTumorCounts:
@@ -116,26 +115,6 @@ rule DenoiseTumors:
 		"--standardized-copy-ratios {output.stand} "
 		"--denoised-copy-ratios {output.denoised}"
 
-# Generate CNV plots
-"""
-rule PlotDenoisedCopyRatios:
-	input:
-		stand=config['dir'] + "readcounts-tumor/{tumor}_standardizedCR.tsv",
-		denoised=config['dir'] + "readcounts-tumor/{tumor}_denoisedCR.tsv",
-		dic=config['dictionary']
-	output:
-		expand(config['dir'] + "plots_tumor/{{tumor}}.{ext}",
-			ext = plotformats)
-	params:
-		directory=config['dir'] + "/plots_tumor/",
-		prefix="{tumor}"
-	threads: 3
-	shell:
-		"gatk PlotDenoisedCopyRatios --standardized-copy-ratios {input.stand} "
-		"--denoised-copy-ratios {input.denoised} --sequence-dictionary "
-		"{input.dic} --output {params.directory} "
-		"--output-prefix {params.prefix}"
-"""
 # Model tumor segments
 rule ModelTumorSegments:
 	input:
