@@ -1,0 +1,26 @@
+# Sample related
+input: "INDIR"
+samplename: "SAMPLENAME"
+output: "OUTDIR"
+paired: True
+lanesplit: True
+
+# Semi-static
+bc: "./96_NlaIII-barcodes.txt"
+cutsites: "./hg19-cutsites.bed"
+mismatches: 1
+barcode_length: 8
+read_length: 130 # After removing barcodes etc 56 // 130
+
+# References
+ref: "PATH TO HG19 REFERENCE GENOME"
+refname: 'hg19'
+
+# Tools
+demux: "python ./demultipelx/demultiplex_withcython.py"
+combineLogs: "./combine_logfiles.R"
+getReads: "./Extract_readnames_nearCutsites.R"
+alfred: "~/alfred/bin/alfred"
+
+# Threads
+threads: 32
